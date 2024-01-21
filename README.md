@@ -1,6 +1,6 @@
 # Hello!
 
-My name is Francis Phan
+My name is Francis Phan.
 
 I recently graduated from the University of Canterbury with a CompSci degree.
 

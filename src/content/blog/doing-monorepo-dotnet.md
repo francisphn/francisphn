@@ -123,9 +123,9 @@ It's been working great for us so far.
 
 The tool is well documented, so I won't go into details here. Here's a brief guide:
 
-1. You use NRWL's `nx-set-shas` to determine the last successful commit on the main branch. This is
+1. You use NRWL's `nx-set-shas` to determine the last successful commit on the branch. This is
    the commit that you want to compare against. You can use the `github.base_ref` variable to get the
-   main branch name.
+   branch name. For pull requests, this is the base branch. For pushes, this is the branch you pushed to.
 
 2. You use `dotnet-affected` to determine the affected projects between the last successful commit
    and the current commit. You can use the `github.sha` variable to get the current commit SHA.

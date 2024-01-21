@@ -5,8 +5,10 @@ title: What I've learnt about monorepos with .NET
 featured: false
 draft: false
 tags:
-  - color-schemes
-  - docs
+  - devops
+  - monorepo
+  - git
+  - dotnet
 description: Monorepos are great for many startups, but they also have caveats.
 ---
 

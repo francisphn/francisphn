@@ -111,7 +111,7 @@ const layoutProps = {
   function addHeadingLinks() {
     let headings = Array.from(document.querySelectorAll("h2, h3, h4, h5, h6"));
     for (let heading of headings) {
-      heading.classList.add("group")
+      heading.classList.add("group");
       let link = document.createElement("a");
       link.innerText = "#";
       link.className = "heading-link hidden group-hover:inline-block ml-2";

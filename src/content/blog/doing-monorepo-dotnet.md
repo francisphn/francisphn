@@ -18,51 +18,73 @@ what I have learnt out of the process.
 
 If you need a refresher on what a monorepo is, [here's a good article](https://www.atlassian.com/git/tutorials/monorepos).
 
-## .NET encourages a monorepo mental model
+## Start with a solution or workspace
+
+If you use .NET, you will know that .NET is built around the concept of a "solution". A solution can
+contain multiple projects, and each project can be a library or an application. This way of structuring
+code is by design from the very start of the .NET ecosystem, as opposed to other ecosystems where it's
+an afterthought. Therefore, if you use .NET, you will naturally start with a codebase following the
+monorepo pattern, and all the native .NET tooling you use assumes you have this pattern.
+
+Other ecosystems like Node/npm, Python/Virtualenv, and Java/Maven, are not built around the
+workspace concept, so you will naturally start with a codebase following the polyrepo pattern.
 
 Unlike many other ecosystems (think Node/npm or Virtualenv), .NET gives you a "solution" that can
 contain multiple projects. Everything in .NET is built around this concept, as opposed to
 other ecosystems where it's an afterthought. This mental model makes it easy to both do monorepos and
-promote the microservice pattern.
+promote the microservice pattern from the start, although NPM workspaces have made it easier to host
+multiple projects in a single repository in more recent times.
 
-## Scaling from the solution
+## Scaling from the .NET solution
 
-We started with that one solution, and it was great. We had a single place to manage all our projects and
-did not need to worry about all the problems that come with multiple repositories:
+We started with that one solution, and it was great. We had a single place to manage all our projects
+and did not need to worry about all the problems that come with multiple repositories:
 
 - We didn't need to worry about how to share code between projects. We just added a reference to the
   project we wanted to use.
 
-- We didn't need to worry about versioning dependencies or maintaining a NuGet server. With the constant changes we were making to
-  library projects, it would have been a nightmare to manage all the different versions of the same
-  library.
+- We didn't need to worry about versioning dependencies or maintaining a NuGet server. With the
+  constant changes we were making to library projects, it would have been a nightmare to manage all
+  the different versions of the same library.
 
 - Untold amount of convenience and time saved by being able to search, navigate, refactor, and to
   deliver changes across the entire codebase. A pull request that touches multiple projects is a
   breeze.
 
-All of this allowed us to focus on the product and not worry about the "ops" side of things. As a single team
-that was just starting out and owned the entire codebase, this was a great way to start.
+All of this allowed us to focus on the product and not worry about the "ops" side of things. As a
+single team that was just starting out and owned the entire codebase, this was a great way to start.
 
 As we scaled into maintaining multiple microservices, we started to see the limits. A single change
 would force us to test and deploy all the microservices, even if they were not affected by the change.
 
 ## Considerations in adopting a monorepo
 
-At this point, after doing some research, we made a highly conscious decision to "officially" adopt the
-monorepo pattern moving forward, especially after reading about my friends at other companies were doing it like Partly (also based in New Zealand),
-Canva, and Google. Arguments for and against monorepos are well documented, so I won't go into them here. Instead, here are the main
-things we considered when adopting the monorepo pattern.
+At this point, after doing some research, we made a highly conscious decision to "officially" adopt
+the monorepo pattern moving forward, especially after reading about my friends at other companies
+were doing it like Partly (also based in New Zealand), Canva, and Google. Arguments for and against
+monorepos are well documented, so I won't go into them here. Instead, here are the main things we
+considered when adopting the monorepo pattern.
 
-### 1. Tooling: Bazel and Nx
+### 1. Tooling
 
-Having researched into Bazel and Nx, we thought that they provided a highly complex abstraction over the dotnet CLI. It would
-change everything to do with how we build, test, debug, deploy and reference dependencies. Bazel and Nx requires a lot of configuration
-to get right and maintain, in the pipeline and in IDEs. This takes a high level of buy-in and amount of effort to get right.
-Tools like Bazel and Nx are also more focused on not needing to build every project when you run `dotnet run`, which was
-not a problem for us because code compilation was imperceptibly fast. Instead, we were more conscious on the amount of time
-it took to run tests, build Docker images, and deploy. At the time, we were not ready
-to make that investment.
+Having researched into Bazel and Nx, two popular monorepo tools, we thought that they provided a
+highly complex abstraction over the dotnet CLI that would require us to pay a hefty tax to adopt:
+
+- They would change everything to do with how we build, test, debug, deploy and reference
+  dependencies.
+
+- Also, especially for Bazel, monorepo tools would require a lot of configuration to get right and
+  maintain, in the pipeline and in IDEs.
+
+- Finally, tools like Bazel and Nx are also more focused on not needing to compile every single
+  project when you run `dotnet run`, which was not a problem for us because code compilation was
+  imperceptibly fast at our scale, both locally and in the pipeline.
+
+- Instead, we were more conscious on the amount of time it took to run tests, build Docker images,
+  and deploy.
+
+Therefore, at the time, we were not ready to make that investment after weighing up the pros and
+cons with our then-situation.
 
 ### 2. Git is not designed for monorepos
 
@@ -99,7 +121,7 @@ The fact is, you don't have to buy into one solution 100%.
 Keeping our internal codebase together, which is 97% C#, is a no-brainer.
 We get all the benefits of a monorepo listed above.
 
-For our TypeScript client codebase, we decided to make a separate monorepo.
+For our TypeScript (largely frontend) codebase, we decided to make a separate monorepo.
 This is because we don't seek to interop between different languages.
 
 Lastly, we just make separate repositories for open source and client code. The admin time involved in
@@ -156,7 +178,6 @@ Here's an example:
 #  furnished to do so, subject to conditions. You can read the full license at:
 #  https://opensource.org/license/mit/
 
----
 steps:
   - name: Checkout code
     uses: actions/checkout@v4
@@ -175,7 +196,9 @@ steps:
     run: |
       dotnet tool install dotnet-affected && touch affected.txt
 
-      if dotnet affected -f text traversal --from "${{ steps.setSHAs.outputs.base }}" --to "${{ github.sha }}"; then
+      if dotnet affected -f text traversal \
+        --from "${{ steps.setSHAs.outputs.base }}" \
+        --to "${{ github.sha }}"; then
        if [ -s affected.txt ]; then
          cat affected.txt
          echo "Number of affected projects: " $(wc -l < affected.txt)
@@ -197,22 +220,29 @@ steps:
     run: dotnet test affected.proj
 ```
 
-## This is not an entirely scalable solution
+## This is not an entirely scalable solution, but it leaves room for growth
 
-Right now, this works for us because the time it takes to recompile our entire solution is still fast both locally and in the pipeline.
-However, as we grow, we have been able to perceive that the time it takes to recompile our entire solution is slightly increasing.
+For a time, this worked for us because the time it takes to recompile our entire solution was
+fast both locally and in the pipeline (i.e. the problem Bazel and Nx focus on solving).
 
-Currently though, we are not at the scale where we need to worry about this. The time to recompile our entire solution is still
-less than the effort required to maintain a more complex solution. When the weightings change, we will re-evaluate our decision,
-whether that means adopting a monorepo tool or splitting our codebase into multiple repositories.
+However, as we've grown, we have been able to perceive that the time it takes to recompile our
+entire solution is slightly increasing (but still not a major problem). When it really is at odds
+with our patience, we will eventually consider using a monorepo tool.
+
+The important thing is that we have left room for growth. We already use the monorepo pattern, so
+we can easily adopt a monorepo tool like Bazel, Nx or Pants without having to refactor our codebase.
 
 ## Conclusion
 
-In summary, adopting a monorepo requires consideration of many factors. I recommend studying the pros and cons of it,
-and see which ones apply to your situation. Put both options on a mental weighing scale and see which way it leans.
+In summary, adopting a monorepo requires consideration of many factors. I recommend studying
+the pros and cons of it, and see which ones apply to your situation. Put both options on a mental
+weighing scale and see which way it leans.
 
-It's also important to note that even if you've decided on an approach or use a hybrid approach like ours, like any conscious decision,
-you will eventually have to accept some level of trade-off (unless you're Google and you have the resources to build your own solution).
+It's also important to note that even if you've decided on an approach or use a hybrid approach like
+ours, like any conscious decision in tech or in life, you will eventually have to accept some level
+of trade-offs (unless you're Google and you have the resources to build your own solution).
 
-If you do decide to adopt a monorepo, I recommend an incremental approach. Adopt the monorepo pattern first, and then
-adopt a monorepo tool as you scale.
+If you do decide that a monorepo is suitable for you, I also highly recommend an incremental approach.
+Adopt the monorepo pattern first, and then adopt a monorepo tool as you scale. This way, you can get
+the benefits of a monorepo without the overhead of a monorepo tool, and when the time comes, it
+makes it easier to adopt a monorepo tool.

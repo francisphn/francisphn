@@ -1,6 +1,6 @@
 ---
 author: Francis Phan
-pubDatetime: 2024-01-23T05:24:46.539Z
+pubDatetime: 2024-01-22T05:24:46.539Z
 title: Vector Search with Vertex AI (4-part series, intro)
 featured: false
 draft: false

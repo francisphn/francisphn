@@ -26,14 +26,13 @@ code is by design from the very start of the .NET ecosystem, as opposed to other
 an afterthought. Therefore, if you use .NET, you will naturally start with a codebase following the
 monorepo pattern, and all the native .NET tooling you use assumes you have this pattern.
 
-Other ecosystems like Node/npm, Python/Virtualenv, and Java/Maven, are not built around the
+Other ecosystems like Node/npm or Python/Virtualenv, are not built around the
 workspace concept, so you will naturally start with a codebase following the polyrepo pattern.
+However, support for workspaces is becoming more common in these ecosystems, and I highly recommend
+using them if you are starting a new project:
 
-Unlike many other ecosystems (think Node/npm or Virtualenv), .NET gives you a "solution" that can
-contain multiple projects. Everything in .NET is built around this concept, as opposed to
-other ecosystems where it's an afterthought. This mental model makes it easy to both do monorepos and
-promote the microservice pattern from the start, although NPM workspaces have made it easier to host
-multiple projects in a single repository in more recent times.
+- Node.js: Use npm, Yarn or pnpm workspaces.
+- Python: Use Poetry or Pipenv.
 
 ## Scaling from the .NET solution
 
@@ -88,9 +87,10 @@ cons with our then-situation.
 
 ### 2. Git is not designed for monorepos
 
-Secondly, Git is not designed for monorepos. Linus Torvalds designed Git to be a _distributed_ version control system.
-It requires you to clone the entire repository, which is not ideal for monorepos. This means that in theory, it will
-stop scaling at some point.
+Secondly, Git is not designed for monorepos. Linus Torvalds designed Git to be a _distributed_
+version control system.
+It requires you to clone the entire repository, which is not ideal for monorepos. This means that
+in theory, it will stop scaling at some point.
 
 In practice though, at Canva scale, [Git and Bazel are still working fine enough for them](https://www.canva.dev/blog/engineering/we-put-half-a-million-files-in-one-git-repository-heres-what-we-learned/).
 They do need to optimise, and on the occasion run into issues with GitHub, but they have not yet hit

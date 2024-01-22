@@ -18,7 +18,7 @@ what I have learnt out of the process.
 
 If you need a refresher on what a monorepo is, [here's a good article](https://www.atlassian.com/git/tutorials/monorepos).
 
-## Start with a solution or workspace
+## We started with a solution or workspace
 
 If you use .NET, you will know that .NET is built around the concept of a "solution". A solution can
 contain multiple projects, and each project can be a library or an application. This way of structuring
@@ -31,10 +31,10 @@ workspace concept, so you will naturally start with a codebase following the pol
 However, support for workspaces is becoming more common in these ecosystems, and I highly recommend
 using them if you are starting a new project:
 
-- Node.js: Use npm, Yarn or pnpm workspaces.
-- Python: Use Poetry or Pipenv.
+- Node.js: Use npm, yarn or pnpm workspaces.
+- Python: Use Poetry or pipenv.
 
-## Scaling from the .NET solution
+## Microservices and the limits of MSBuild and our pipeline
 
 We started with that one solution, and it was great. We had a single place to manage all our projects
 and did not need to worry about all the problems that come with multiple repositories:
@@ -51,9 +51,9 @@ and did not need to worry about all the problems that come with multiple reposit
   breeze.
 
 All of this allowed us to focus on the product and not worry about the "ops" side of things. As a
-single team that was just starting out and owned the entire codebase, this was a great way to start.
+single team that was just starting out and owned the entire codebase, this was great.
 
-As we scaled into maintaining multiple microservices, we started to see the limits. A single change
+As we scaled into maintaining multiple microservices though, we started to see the limits. A single change
 would force us to test and deploy all the microservices, even if they were not affected by the change.
 
 ## Considerations in adopting a monorepo
@@ -99,59 +99,75 @@ a point where they need a new version control system to manage their monorepo.
 For Google, although they never adopted Git, they did hit a point where they needed a new version
 control system. Therefore, [they built Piper](https://cacm.acm.org/magazines/2016/7/204032-why-google-stores-billions-of-lines-of-code-in-a-single-repository/fulltext),
 a custom version control system that doesn't require you to clone the entire repository and uses the
-Paxos algorithm to ensure consistency. But do we think we will ever get to Google scale? I'm an optimist, but it's a very far-fetched future.
+Paxos algorithm to ensure consistency. But do we think we will ever get to Google scale? I'm an optimist,
+but it's a very far-fetched future.
 
 ### 3. Open sourcing code and collaboration with clients
 
-Finally, we have a lot of code that we want to open source. As a multitenant SaaS product, we also allow our clients to write their own code and deploy it to our platform.
-For this, we need to be able to give them access to only the code that they need to see. This is not possible with a monorepo.
+Finally, we have a lot of code that we want to open source. As a multitenant SaaS product, we also
+allow our clients to write their own code and deploy it to our platform. For this, we need to be
+able to give them access to only the code that they need to see. This is not possible with a monorepo.
 
 To solve this problem, Google has two tools called [Repo](https://gerrit.googlesource.com/git-repo/) and [Copybara](https://github.com/google/copybara).
-But again, this requires a lot of configuration and maintenance. We soon became aware that some degree configuration is inevitable whichever way we go, we just need to figure out the least effort solution to get the most value.
+But again, this requires a lot of configuration and maintenance. We soon became aware that some
+degree configuration is inevitable whichever way we go, we just need to figure out the least effort
+solution to get the most value.
 
-## Our decision
+### 4. Code interoperability
 
-Having considered all of the above, we decided to not adopt a monorepo tool. Instead, we decided to only adopt a largely monorepo _pattern_.
+One of Canva's reasons for adopting Bazel was the ability to store code in different languages in
+the same repository, specifically Java and TypeScript. Bazel or Nx, as neutral build tools (as opposed
+to language-specific MSBuild or npm), enable this by nature, and also enable sharing code between these
+projects. For us, this was not a problem because we don't seek to interop between different languages
+i.e. another benefit of a monorepo tool not applicable to us.
 
-### 1. Don't be ideological
+## Being incremental is key
 
-Both monorepos and polyrepos have pros and cons.
-The fact is, you don't have to buy into one solution 100%.
+Having considered all of the above, we decided to not adopt a monorepo tool outright. Instead,
+we realised that incremental adoption of the monorepo pattern was the best solution for us. This strategy
+consists of doing these:
 
-Keeping our internal codebase together, which is 97% C#, is a no-brainer.
-We get all the benefits of a monorepo listed above.
+### 1. Have a hybrid monorepo and polyrepo approach
 
-For our TypeScript (largely frontend) codebase, we decided to make a separate monorepo.
-This is because we don't seek to interop between different languages.
+Both monorepos and polyrepos have pros and cons. The fact is, you don't have to buy into one solution 100%,
+especially if you do not have a requirement to interop between different languages.
 
-Lastly, we just make separate repositories for open source and client code. The admin time involved in
-maintaining Copybara cannot yet be justified at our scale.
+Keeping our internal codebase together, which is 97% C#, is a no-brainer. We got all the practical
+benefits of a monorepo listed above for the time being.
 
-### 2. Our problem is with the directed acyclic graph of dependencies
+For code written in TypeScript and Python, we decided to make separate repositories using these
+languages' native build tools (in our case pnpm and pipenv).
+
+Lastly, we made separate repositories for open source and client code. The admin time involved in
+maintaining Copybara could yet be justified at our scale.
+
+### 2. Our problem was not about compile time, but with the directed acyclic graph of dependencies
 
 We found that our problem is just about how we can manage the dependencies between our projects.
-For example, if we have a project A that depends on project B, and a project C that has no dependencies,
-making a change to project A or B should require us to deploy project A, but not project C. In other words,
-this is a directed acyclic graph problem.
+For example, if we have a project A that depends on project B, and a project C that has no
+dependencies, making a change to project A or B should require us to deploy project A, but not project
+C. In other words, this is a directed acyclic graph problem.
 
-A custom tool that can build a directed acyclic graph of our projects and determine changes between commits
-would be ideal. We could then use this information to determine which projects to deploy. This was all we needed
-as opposed to a full-blown monorepo tool.
+A custom tool that can build a directed acyclic graph of our projects and determine changes between
+commits would be ideal. We could then use this information to determine which projects to re-deploy.
+This was all we needed as opposed to a full-blown monorepo tool.
 
 ### 3. `dotnet-affected`
 
-Having understood what we need, we were going to build our own DAG graph tool, but we found that someone had already done it.
+Having understood what we need, we were going to build our own DAG analysis tool, but we found that
+someone had already done it for .NET on GitHub.
 
-We found a tool called [`dotnet-affected`](https://github.com/leonardochaia/dotnet-affected) that does exactly what we wanted.
+The tool is called [`dotnet-affected`](https://github.com/leonardochaia/dotnet-affected), and it does exactly what we wanted.
 And it's been working great for us so far.
 
-## Using `dotnet-affected`
+## Interlude: using `dotnet-affected`
 
 The tool is well documented, so I won't go into details here. Here's a brief guide:
 
-1. You use NRWL's `nx-set-shas` to determine the last successful commit on the branch. This is
+1. You use NRWL's `nx-set-shas` action to determine the last successful commit on the branch. This is
    the commit that you want to compare against. You can use the `github.base_ref` variable to get the
-   branch name. For pull requests, this is the base branch. For pushes, this is the branch you pushed to.
+   branch name. For pull requests, this is the base branch. For pushes, this is the branch you pushed
+   to.
 
 2. You use `dotnet-affected` to determine the affected projects between the last successful commit
    and the current commit. You can use the `github.sha` variable to get the current commit SHA.
@@ -161,7 +177,8 @@ The tool is well documented, so I won't go into details here. Here's a brief gui
 
 4. Have a conditional on subsequent steps to only run if `affected.txt` is not empty.
 
-Keep in mind, GHA only shallow clones the repository, so you need to set `fetch-depth: 0` in the `actions/checkout` step.
+Keep in mind, GHA only shallow clones the repository, so you need to set `fetch-depth: 0` in the
+`actions/checkout` step.
 
 Here's an example:
 
@@ -230,7 +247,7 @@ entire solution is slightly increasing (but still not a major problem). When it 
 with our patience, we will eventually consider using a monorepo tool.
 
 The important thing is that we have left room for growth. We already use the monorepo pattern, so
-we can easily adopt a monorepo tool like Bazel, Nx or Pants without having to refactor our codebase.
+we can easily adopt a monorepo tool like Bazel, Nx or Pants without having to majorly refactor our codebase.
 
 ## Conclusion
 

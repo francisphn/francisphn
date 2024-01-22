@@ -12,13 +12,13 @@ tags:
 description: Monorepos are great for many startups, but they also have caveats.
 ---
 
-For a year now, I've been involved in TriagePlus, alongside many great other people. Our codebase,
+For a year now, I've been involved in Triage-Plus, alongside many great other people. Our codebase,
 written primarily in .NET, has naturally been a monorepo since the beginning. Here's how we do it and
 what I have learnt out of the process.
 
 If you need a refresher on what a monorepo is, [here's a good article](https://www.atlassian.com/git/tutorials/monorepos).
 
-## We started with a solution or workspace
+## We started with a solution
 
 If you use .NET, you will know that .NET is built around the concept of a "solution". A solution can
 contain multiple projects, and each project can be a library or an application. This way of structuring
@@ -28,15 +28,11 @@ monorepo pattern, and all the native .NET tooling you use assumes you have this 
 
 Other ecosystems like Node/npm or Python/Virtualenv, are not built around the
 workspace concept, so you will naturally start with a codebase following the polyrepo pattern.
-However, support for workspaces is becoming more common in these ecosystems, and I highly recommend
-using them if you are starting a new project:
-
-- Node.js: Use npm, yarn or pnpm workspaces.
-- Python: Use Poetry or pipenv.
+However, support for workspaces is becoming more common in these ecosystems.
 
 ## Microservices and the limits of MSBuild and our pipeline
 
-We started with that one solution, and it was great. We had a single place to manage all our projects
+Our one-solution approach was great. We had a single place to manage all our projects
 and did not need to worry about all the problems that come with multiple repositories:
 
 - We didn't need to worry about how to share code between projects. We just added a reference to the
@@ -53,27 +49,34 @@ and did not need to worry about all the problems that come with multiple reposit
 All of this allowed us to focus on the product and not worry about the "ops" side of things. As a
 single team that was just starting out and owned the entire codebase, this was great.
 
-As we scaled into maintaining multiple microservices though, we started to see the limits. A single change
-would force us to test and deploy all the microservices, even if they were not affected by the change.
+What I've described above can informally be called the **monorepo pattern**. You put multiple projects
+into a single repository and use the native tooling to manage them (in this case, MSBuild or npm).
+However, as we scaled, we started to see the limits of purely using the monorepo pattern with just
+MSBuild and our pipeline: a single change would force us to test and deploy all the microservices,
+even if they were not affected by the change.
 
-## Considerations in adopting a monorepo
+## Crossroads No. 1
 
-At this point, after doing some research, we made a highly conscious decision to "officially" adopt
-the monorepo pattern moving forward, especially after reading about my friends at other companies
+At this crossroads, we had to make a decision. We could either:
+
+1. Adopt a monorepo tool like Bazel or Nx, or
+2. Adopt a polyrepo approach, or
+3. Go with a hybrid approach of both.
+
+We read about how our friends at other companies
 were doing it like Partly (also based in New Zealand), Canva, and Google. Arguments for and against
 monorepos are well documented, so I won't go into them here. Instead, here are the main things we
-considered when adopting the monorepo pattern.
+considered when making our decision.
 
 ### 1. Tooling
 
 Having researched into Bazel and Nx, two popular monorepo tools, we thought that they provided a
 highly complex abstraction over the dotnet CLI that would require us to pay a hefty tax to adopt:
 
-- They would change everything to do with how we build, test, debug, deploy and reference
-  dependencies.
-
-- Also, especially for Bazel, monorepo tools would require a lot of configuration to get right and
-  maintain, in the pipeline and in IDEs.
+- Both Bazel and Nx are language-agnostic tools. To support .NET, they use attachable "rules" or
+  "plugins" that wraps around the dotnet CLI. This means that there are special commands to do
+  things like build, test, serve, etc. The problem with this is that IDEs like Rider are built around
+  the dotnet CLI, so we would lose a lot of IDE support, most notably debugging.
 
 - Finally, tools like Bazel and Nx are also more focused on not needing to compile every single
   project when you run `dotnet run`, which was not a problem for us because code compilation was

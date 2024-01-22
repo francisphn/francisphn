@@ -78,7 +78,7 @@ highly complex abstraction over the dotnet CLI that would require us to pay a he
   things like build, test, serve, etc. The problem with this is that IDEs like Rider are built around
   the dotnet CLI, so we would lose a lot of IDE support, most notably debugging.
 
-- Finally, tools like Bazel and Nx are also more focused on not needing to compile every single
+- Also, tools like Bazel and Nx are also more focused on not needing to compile every single
   project when you run `dotnet run`, which was not a problem for us because code compilation was
   imperceptibly fast at our scale, both locally and in the pipeline.
 

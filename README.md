@@ -4,7 +4,7 @@ My name is Francis Phan.
 
 I recently graduated from the University of Canterbury with a CompSci degree.
 
-I currently work for Triage-Plus, and am an incoming Graduate Engineer for Xero in 2024.
+I work at Xero as a Graduate Engineer. 
 
 **My interests:**
 

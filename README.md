@@ -1,10 +1,6 @@
 # Hello!
 
-My name is Francis Phan.
-
-I recently graduated from the University of Canterbury with a CompSci degree.
-
-I work at Xero as a Graduate Engineer. 
+My name is Francis Phan. I do SWE @ Xero.
 
 **My interests:**
 

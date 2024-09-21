@@ -1,14 +1,7 @@
 ---
-import { getCollection } from "astro:content";
 import Layout from "@layouts/Layout.astro";
 import Header from "@components/Header.astro";
 import Footer from "@components/Footer.astro";
-import LinkButton from "@components/LinkButton.astro";
-import Hr from "@components/Hr.astro";
-import Card from "@components/Card";
-import Socials from "@components/Socials.astro";
-import getSortedPosts from "@utils/getSortedPosts";
-import { SOCIALS } from "@config";
 ---
 
 <Layout>
@@ -33,33 +26,36 @@ import { SOCIALS } from "@config";
       <!--</a>-->
 
       <div>
-        <p>
-          Hi! I recently graduated from the University of Canterbury with a
-          CompSci degree. I currently work for Triage-Plus, and am an incoming
-          Graduate Engineer for Xero in 2024.
-        </p>
+        <p>Hi! My name is Francis Phan. I do SWE @ Xero.</p>
       </div>
 
       <div>
-        <p class="font-bold">My interests:</p>
+        <p class="font-bold">
+          I am interested in modern cloud, SWE and data practices:
+        </p>
 
-        <ul class="list-disc pl-6 space-y-2">
+        <ul class="list-disc space-y-2 pl-6">
           <li>
-            Distributed and cluster computing (Kubernetes, horizontally scalable databases, Apache
-            Spark)
+            Cloud-native architecture, infrastructure, IaC, observability, and
+            security practices
           </li>
-          <li>Parallelism and scalability</li>
-          <li>CI/CD, Infrastructure as Code and platform observability</li>
-          <li>GraphQL, ASP.NET Core and cloud security practices</li>
-          <li>Content-based recommendation systems</li>
+          <li>Event-driven, microservice, and serverless architectures</li>
+          <li>
+            Distributed systems, high availability, fault tolerance, and
+            horizontal scalability
+          </li>
+          <li>
+            GraphQL, ASP.NET Core and how OOP and functional programming can
+            co-exist to elegantly solve SWE problems
+          </li>
+          <li>Content-based recommendation systems and searching algorithms</li>
         </ul>
       </div>
 
       <div>
         <p class="font-bold">I'm currently playing around with...</p>
 
-        <ul class="list-disc pl-6 space-y-2">
-          <li>Android development</li>
+        <ul class="list-disc space-y-2 pl-6">
           <li>AR/VR and visualisation</li>
         </ul>
       </div>
